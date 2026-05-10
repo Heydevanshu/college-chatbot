@@ -6,4 +6,4 @@ def home():
     return "college Chatbot Running"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)ṇ
