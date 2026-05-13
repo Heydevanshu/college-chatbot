@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Chatbot</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7fb;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 420px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #1e40af;
+            color: white;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+        }
+
+        .chat-body {
+            padding: 20px;
+            min-height: 300px;
+            background-color: #f9fafb;
+        }
+
+        .user-message {
+            background-color: #dbeafe;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .bot-message {
+            background-color: #e5e7eb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .chat-form {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            background-color: white;
+        }
+
+        .chat-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .chat-form button {
+            margin-left: 10px;
+            padding: 12px 18px;
+            border: none;
+            background-color: #2563eb;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .chat-form button:hover {
+            background-color: #1d4ed8;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-container">
+
+        <div class="chat-header">
+            <h1>College Chatbot</h1>
+        </div>
+
+        <div class="chat-body">
+
+            {% if user_message %}
+
+                <div class="user-message">
+                    <strong>You:</strong>
+                    <p>{{ user_message }}</p>
+                </div>
+
+            {% endif %}
+
+
+            {% if response %}
+
+                <div class="bot-message">
+                    <strong>Bot:</strong>
+                    <p>{{ response }}</p>
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <form class="chat-form" method="POST" action="/chat">
+
+            <input
+                type="text"
+                name="message"
+                placeholder="Type your message"
+                required
+            >
+
+            <button type="submit">
+                Send
+            </button>
+
+        </form>
+
+    </div>
+
+</body>
+
+</html>

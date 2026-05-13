@@ -1,140 +1,81 @@
-"""
-chatbot.py
 
-This file handles:
-1. User input processing
-2. database queries
-3. Chatbot response
-"""
+from database import (
+    create_connection,
+    get_latest_exam,
+    get_faculty,
+    get_syllabus,
+    get_all_exams
+)
 
-from enum import member
-
-from database import create_connection
-
-def get_latest_notice():
-    """fetch latest notice from database."""
+def get_latest_notices():
+    """Fetch latest notice from database."""
     connection = create_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""
-            SELECT title, link, date
-            FROM notices
-            ORDER BY date DESC
-            LIMIT 1
-        """)
     
+
+    if connection is None:
+        return "Database connection failed.0"
+    
+    cursor = connection.cursor()
+    cursor.execute("""
+                   SELECT title, link, date
+                    FROM notice
+                   ORDER BY date DESC
+                   LIMIT 5
+               """)
     notice = cursor.fetchone()
     connection.close()
 
     if notice:
-        return (
-            f"Latest Notice:\n"
-            f"Title: {notice[0]}\n"
-            f"date: {notice[2]}\n"
-            f"Link: {notice[1]}"
-        )
+        return f"Latest Notice: {notice[0]} ({notice[1]})"
     
-    return "No notices found."
-
-def get_exam_schedule():
-    """fetch exam schedeule"""
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""
-            SELECT subject, exam_data, exam_time
-            FROM exam_schedule
-        """)
-    
-    exams = cursor.fetchall()
-    connection.close()
-
-    if exams:
-        response = "Exam Schedule:\n"
-        for exam in exams:
-            response += (
-                f"Subject: {exam[0]}\n"
-                f"Date: {exam[1]}\n"
-                f"Time: {exam[2]}\n\n"
-            )
-        return response
-    
-    return "No exam schedule found."
-
-def get_faculty_information():
-    """fetch faculty details."""
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""
-            SELECT name, subject, phone, email
-            FROM faculty
-        """)
-    
-    faculty_data = cursor.fetchall()
-    connection.close()
-
-    if faculty_data:
-        response = "Faculty Information:\n"
-        for faculty in faculty_data:
-            response += (
-                f"Name: {faculty[0]}\n"
-                f"Subject: {faculty[1]}\n"
-                f"Phone: {faculty[2]}\n"
-                f"Email: {faculty[3]}\n\n"
-            )
-        return response
-    
-    return "No faculty information found."
-
-
-def get_syllabus():
-    """fetch syllabus PDF links."""
-
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""
-            SELECT semester, subject, pdf_link
-            FROM syllabus
-        """)
-    
-    syllabus_data = cursor.fetchall()
-    connection.close()
-
-    if syllabus_data:
-        response = "Syllabus Information:\n"
-
-        for syllabus in syllabus_data:
-            response += (
-                f"Semester: {syllabus[0]}\n"
-                f"Subject: {syllabus[1]}\n"
-                f"PDF: {syllabus[2]}\n\n"
-            )
-        return response
-    
-    return "No syllabus information found."
+    return "No notices available."
 
 def get_chatbot_response(user_message):
+    """Generate chatbot response."""
 
-    """Generate chatbot response based on user input."""
+    user_message = user_message.lower()
 
-    message = user_message.lower()
+    # Greeting
+    if "hello" in user_message or "hi" in user_message:
+        return "Hello! How can I assist you today?"
 
-    # latest Notice
-    if "notice" in message:
-        return get_latest_notice()
-    
-    # Exam Schedule
-    elif "exam" in message:
-        return get_exam_schedule()
-    
+    # Latest Notice
+    elif "exam" in user_message:
+        exams = get_all_exams("CSE", "Semester VI")
+        if exams:
+            response = "CSE Semester VI Exam Schedule:\n"
+            for exam in exams:
+                response += f"- {exam[0]} on {exam[1]} at {exam[2]}\n"
+            return response
+        else:
+            return "No exam schedule available."
+
     # Faculty Information
-    elif "faculty" in message or "teacher" in message:
-        return get_faculty_information()
+    elif "faculty" in user_message or "teacher" in user_message:
+        faculty = get_faculty()
+
+        if faculty:
+
+            response = "Faculty List:\n"
+            for teacher in faculty:
+                response += f"- {teacher[0]} ({teacher[1]})\n"
+            return response
+        
+        return "No faculty information available."
     
     # Syllabus Information
-    elif "syllabus" in message:
-        return get_syllabus()
+    elif "syllabus" in user_message:
+        syllabus = get_syllabus()
+
+        if syllabus:
+            response = "Syllabus links:\n"
+
+            for item in syllabus:
+                response += f"- {item[0]}: {item[1]} ({item[2]})\n"
+            return response
+        
+        return "No syllabus information available."
+    
+    # Default response
     else:
-        return "Sorry, I didn't understand that. Please ask about notices, exam schedule, faculty, or syllabus."
+        return "Sorry, I didn't understand that. Please ask about notices, faculty, syllabus, or exams."

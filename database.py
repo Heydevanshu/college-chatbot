@@ -58,23 +58,26 @@ def create_tables():
 # Faculty Table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS faculty (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    department TEXT NOT NULL,
-    subject TEXT NOT NULL,
-    phone TEXT,
-    email TEXT
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   name TEXT NOT NULL,
+                   branch TEXT NOT NULL,
+                   semester TEXT NOT NULL,
+                   subject TEXT NOT NULL,
+                   phone TEXT,
+                   email TEXT
     )
     ''')
 
 # Exam Schedule
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS exam_schedule (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    subject TEXT NOT NULL,
-    exam_date TEXT NOT NULL,
-    exam_time TEXT NOT NULL
-    )
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   branch TEXT NOT NULL,
+                   semester TEXT NOT NULL,
+                   subject TEXT NOT NULL,
+                   exam_date TEXT NOT NULL,
+                   exam_time TEXT NOT NULL
+                   )
     ''')
 
 # Syllabus Table
@@ -108,7 +111,7 @@ def add_notice(title, link, date):
     print("Notice added successfully.")
 
 # Faculty Information
-def add_faculty(name, department, subject, phone, email):
+def add_faculty(name, branch, semester, subject, phone, email):
     """Insert faculty information"""
 
     connection = create_connection()
@@ -116,15 +119,15 @@ def add_faculty(name, department, subject, phone, email):
 
     cursor.execute("""
                    INSERT INTO faculty
-                   (name, department, subject, phone, email)
-                   VALUES (?, ?, ?, ?, ?)
-               """, (name, department, subject, phone, email))
+                   (name, branch, semester, subject, phone, email)
+                   VALUES (?, ?, ?, ?, ?, ?)
+               """, (name, branch, semester, subject, phone, email))
     connection.commit()
     connection.close()
     print("Faculty member added successfully.")
 
 # Exam Schedule
-def add_exam_schedule(subject, exam_date, exam_time):
+def add_exam_schedule(branch, semester, subject, exam_date, exam_time):
     """Insert exam schedule"""
 
     connection = create_connection()
@@ -132,9 +135,9 @@ def add_exam_schedule(subject, exam_date, exam_time):
 
     cursor.execute("""
                    INSERT INTO exam_schedule
-                   (subject, exam_date, exam_time)
-                   VALUES (?, ?, ?)
-               """, (subject, exam_date, exam_time))
+                     (branch, semester, subject, exam_date, exam_time)
+                     VALUES (?, ?, ?, ?, ?)
+               """, (branch, semester, subject, exam_date, exam_time))
     connection.commit()
     connection.close()
     print("Exam schedule added successfully.")
@@ -155,12 +158,102 @@ def add_syllabus(semester, subject, pdf_link):
     connection.close()
     print("Syllabus information added successfully.")
 
+# Get latest exam schedule
+def get_latest_exam():
+
+    connection = create_connection()
+
+    if connection is None:
+        return None
+    
+    cursor = connection.cursor()
+
+    cursor.execute("""
+                   SELECT subject, exam_date, exam_time
+                   FROM exam_schedule
+                   ORDER BY exam_date DESC, exam_time DESC
+                   LIMIT 1
+               """)
+    exam = cursor.fetchone()
+    connection.close()
+    return exam
+
+# Get Faculty Information
+# Fetch faculty data from database
+def get_faculty():
+
+    connection = create_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT name, branch, semester, subject
+        FROM faculty
+    """)
+
+    faculty = cursor.fetchall()
+
+    connection.close()
+
+    return faculty
+
+# Get Syllabus Information
+def get_syllabus():
+
+    connection = create_connection()
+
+    if connection is None:
+        return None
+    
+    cursor = connection.cursor()
+
+    cursor.execute("""
+                   SELECT semester, pdf_link
+                   FROM syllabus
+               """)
+    syllabus = cursor.fetchone()
+    connection.close()
+    return syllabus
+
+# Fetch all exam schedules for a specific semester and branch
+def get_all_exams(branch, semester):
+
+    connection = create_connection()
+
+    if connection is None:
+        return []
+    
+    cursor = connection.cursor()
+
+    cursor.execute("""
+                   SELECT subject, exam_date, exam_time
+                   FROM exam_schedule
+                   WHERE branch = ? AND semester = ?
+                   ORDER BY exam_date ASC, exam_time ASC
+               """, (branch, semester))
+    exams = cursor.fetchall()
+    connection.close()
+    return exams
+
 # Run directly
 if __name__ == "__main__":
     create_tables()
 
-    # Sample data insertion
-    add_notice("Midterm Exams Scheduled", "http://college.edu/notices/midterm-exams", "2024-10-01")
-    add_faculty("Dr. John Doe", "Computer Science", "Data Structures", "123-456-7890", "john.doe@college.edu")
-    add_exam_schedule("Data Structures", "2024-10-15", "10:00 AM")
-    add_syllabus("Fall 2024", "Data Structures", "http://college.edu/syllabi/data-structures.pdf")
+    # Faculty
+    add_faculty("Smita Mishra", "CSE", "VI", "Machine Learning", "", "")
+    add_faculty("Ichchha Shrivastava", "CSE", "VI", "Computer Network", "", "")
+    add_faculty("Dr. Preeti Verma", "CSE", "VI", "Project Management", "", "")
+    add_faculty("Ritu Singh", "CSE", "VI", "Compiler Design", "", "")
+    add_faculty("Pratima Singh", "CSE", "VI", "SD Lab", "", "")
+
+    # Exam Schedule
+    add_exam_schedule("CSE", "Semester VI", "Machine Learning", "2026-05-20", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "Semester VI", "Computer Network", "2026-05-21", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "Semester VI", "Project Management", "2026-05-22", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "Semester VI", "Compiler Design", "2026-05-23", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "Semester VI", "Software Development Lab", "2026-05-23", "1:00 AM - 5:00 PM")
+    add_exam_schedule("CSE", "Semester VI", "Minor Project", "2026-05-25", "11:00 AM - 12:30 PM")
+    
