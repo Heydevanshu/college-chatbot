@@ -279,19 +279,19 @@ if __name__ == "__main__":
     add_faculty("Ritu Singh", "CSE", "VI", "Compiler Design", "", "")
     add_faculty("Pratima Singh", "CSE", "VI", "SD Lab", "", "")
 
-    # Exam Schedule
-    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Machine Learning", "2026-05-20", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Computer Network", "2026-05-21", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Project Management", "2026-05-22", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Compiler Design", "2026-05-23", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Software Development Lab", "2026-05-23", "1:00 AM - 5:00 PM")
-    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Minor Project", "2026-05-25", "11:00 AM - 12:30 PM")
+    # # Exam Schedule
+    # add_exam_schedule("CSE", "VI", "Mid Sem 2", "Machine Learning", "2026-05-20", "11:00 AM - 12:30 PM")
+    # add_exam_schedule("CSE", "VI", "Mid Sem 2", "Computer Network", "2026-05-21", "11:00 AM - 12:30 PM")
+    # add_exam_schedule("CSE", "VI", "Mid Sem 2", "Project Management", "2026-05-22", "11:00 AM - 12:30 PM")
+    # add_exam_schedule("CSE", "VI", "Mid Sem 2", "Compiler Design", "2026-05-23", "11:00 AM - 12:30 PM")
+    # add_exam_schedule("CSE", "VI", "Mid Sem 2", "Software Development Lab", "2026-05-23", "1:00 AM - 5:00 PM")
+    # add_exam_schedule("CSE", "VI", "Mid Sem 2", "Minor Project", "2026-05-25", "11:00 AM - 12:30 PM")
     
-    # Test fetch
-    data = get_exam_schedule(
-        "CSE",
-        "VI",
-        "Mid Sem 2"
-    )
+    # # Test fetch
+    # data = get_exam_schedule(
+    #     "CSE",
+    #     "VI",
+    #     "Mid Sem 2"
+    # )
 
-    print(data)
+    # print(data)

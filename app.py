@@ -1,7 +1,12 @@
+from admin import admin_bp
 from flask import Flask, request, render_template
 from chatbot import get_chatbot_response
 
 app = Flask(__name__)
+app.secret_key = "college_chatbot_secret"
+
+# Register admin blueprint
+app.register_blueprint(admin_bp)
 
 @app.route("/", methods=["GET"])
 def home():
