@@ -2,8 +2,14 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>College Chatbot</title>
 
     <style>
@@ -21,12 +27,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
         .chat-container {
-            width: 420px;
+            width: 100%;
+            max-width: 500px;
             background: white;
-            border-radius: 12px;
+            border-radius: 14px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
@@ -44,22 +52,59 @@
 
         .chat-body {
             padding: 20px;
-            min-height: 300px;
+            min-height: 350px;
             background-color: #f9fafb;
         }
 
         .user-message {
             background-color: #dbeafe;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .user-message p {
+            margin-top: 5px;
         }
 
         .bot-message {
             background-color: #e5e7eb;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .bot-message strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .response-table {
+            overflow-x: auto;
+        }
+
+        .response-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            background-color: white;
+        }
+
+        .response-table th,
+        .response-table td {
+            border: 1px solid #d1d5db;
             padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .response-table th {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .response-table tr:nth-child(even) {
+            background-color: #f3f4f6;
         }
 
         .chat-form {
@@ -94,6 +139,7 @@
         }
 
     </style>
+
 </head>
 
 <body>
@@ -101,7 +147,9 @@
     <div class="chat-container">
 
         <div class="chat-header">
+
             <h1>College Chatbot</h1>
+
         </div>
 
         <div class="chat-body">
@@ -109,8 +157,11 @@
             {% if user_message %}
 
                 <div class="user-message">
+
                     <strong>You:</strong>
+
                     <p>{{ user_message }}</p>
+
                 </div>
 
             {% endif %}
@@ -119,8 +170,15 @@
             {% if response %}
 
                 <div class="bot-message">
+
                     <strong>Bot:</strong>
-                    <p>{{ response }}</p>
+
+                    <div class="response-table">
+
+                        {{ response | safe }}
+
+                    </div>
+
                 </div>
 
             {% endif %}
@@ -128,7 +186,11 @@
         </div>
 
 
-        <form class="chat-form" method="POST" action="/chat">
+        <form
+            class="chat-form"
+            method="POST"
+            action="/chat"
+        >
 
             <input
                 type="text"
@@ -138,7 +200,9 @@
             >
 
             <button type="submit">
+
                 Send
+
             </button>
 
         </form>

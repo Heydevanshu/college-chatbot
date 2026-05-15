@@ -74,6 +74,7 @@ def create_tables():
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                    branch TEXT NOT NULL,
                    semester TEXT NOT NULL,
+                   exam_type TEXT NOT NULL,
                    subject TEXT NOT NULL,
                    exam_date TEXT NOT NULL,
                    exam_time TEXT NOT NULL
@@ -127,17 +128,20 @@ def add_faculty(name, branch, semester, subject, phone, email):
     print("Faculty member added successfully.")
 
 # Exam Schedule
-def add_exam_schedule(branch, semester, subject, exam_date, exam_time):
+def add_exam_schedule(branch, semester, exam_type, subject, exam_date, exam_time):
     """Insert exam schedule"""
 
     connection = create_connection()
+    if connection is None:
+        print("Failed to connect to database.")
+        return
     cursor = connection.cursor()
 
     cursor.execute("""
                    INSERT INTO exam_schedule
-                     (branch, semester, subject, exam_date, exam_time)
-                     VALUES (?, ?, ?, ?, ?)
-               """, (branch, semester, subject, exam_date, exam_time))
+                     (branch, semester, exam_type, subject, exam_date, exam_time)
+                     VALUES (?, ?, ?, ?, ?, ?)
+               """, (branch, semester, exam_type, subject, exam_date, exam_time))
     connection.commit()
     connection.close()
     print("Exam schedule added successfully.")
@@ -157,6 +161,31 @@ def add_syllabus(semester, subject, pdf_link):
     connection.commit()
     connection.close()
     print("Syllabus information added successfully.")
+
+# Fetch exams for a specific branch, semester and exam type
+def get_exam_schedule(branch, semester, exam_type):
+
+    connection = create_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT subject, exam_date, exam_time
+        FROM exam_schedule
+        WHERE branch = ?
+        AND semester = ?
+        AND exam_type = ?
+        ORDER BY exam_date
+    """, (branch, semester, exam_type))
+
+    exams = cursor.fetchall()
+
+    connection.close()
+
+    return exams
 
 # Get latest exam schedule
 def get_latest_exam():
@@ -180,7 +209,7 @@ def get_latest_exam():
 
 # Get Faculty Information
 # Fetch faculty data from database
-def get_faculty():
+def get_faculty(branch):
 
     connection = create_connection()
 
@@ -190,9 +219,10 @@ def get_faculty():
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT name, branch, semester, subject
+        SELECT name, phone, email
         FROM faculty
-    """)
+        WHERE branch = ?
+    """, (branch,))
 
     faculty = cursor.fetchall()
 
@@ -250,10 +280,18 @@ if __name__ == "__main__":
     add_faculty("Pratima Singh", "CSE", "VI", "SD Lab", "", "")
 
     # Exam Schedule
-    add_exam_schedule("CSE", "Semester VI", "Machine Learning", "2026-05-20", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "Semester VI", "Computer Network", "2026-05-21", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "Semester VI", "Project Management", "2026-05-22", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "Semester VI", "Compiler Design", "2026-05-23", "11:00 AM - 12:30 PM")
-    add_exam_schedule("CSE", "Semester VI", "Software Development Lab", "2026-05-23", "1:00 AM - 5:00 PM")
-    add_exam_schedule("CSE", "Semester VI", "Minor Project", "2026-05-25", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Machine Learning", "2026-05-20", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Computer Network", "2026-05-21", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Project Management", "2026-05-22", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Compiler Design", "2026-05-23", "11:00 AM - 12:30 PM")
+    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Software Development Lab", "2026-05-23", "1:00 AM - 5:00 PM")
+    add_exam_schedule("CSE", "VI", "Mid Sem 2", "Minor Project", "2026-05-25", "11:00 AM - 12:30 PM")
     
+    # Test fetch
+    data = get_exam_schedule(
+        "CSE",
+        "VI",
+        "Mid Sem 2"
+    )
+
+    print(data)
