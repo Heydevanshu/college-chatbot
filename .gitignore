@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 database/*.db
 uploads/pdfs/
+uploads/files/
 flask-server*.log

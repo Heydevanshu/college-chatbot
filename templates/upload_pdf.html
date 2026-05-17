@@ -2,20 +2,20 @@
 
 {% block content %}
     <div class="page-header">
-        <h2>Upload PDF</h2>
+        <h2>Upload File</h2>
         <a class="btn btn-secondary" href="{{ url_for('admin.uploaded_pdfs') }}">
-            Uploaded PDFs
+            Uploaded Files
         </a>
     </div>
 
     <form class="panel" method="POST" enctype="multipart/form-data">
         <div class="field">
-            <label for="pdf_file">PDF File</label>
-            <input id="pdf_file" type="file" name="pdf_file" accept=".pdf" required>
+            <label for="pdf_file">PDF, Excel, or CSV File</label>
+            <input id="pdf_file" type="file" name="pdf_file" accept=".pdf,.xlsx,.csv" required>
         </div>
 
         <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Upload PDF</button>
+            <button class="btn btn-primary" type="submit">Upload File</button>
         </div>
     </form>
 
@@ -25,14 +25,31 @@
 
             <div class="result-grid">
                 <p><strong>File:</strong> {{ result.filename }}</p>
-                <p><strong>Detected type:</strong> {{ result.pdf_type | title }}</p>
+                <p><strong>File type:</strong> {{ result.file_type | default("pdf") | title }}</p>
+                <p><strong>Detected data:</strong> {{ result.detected_type | default(result.pdf_type) | replace("_", " ") | title }}</p>
                 <p><strong>Parsed records:</strong> {{ result.parsed_data.records | length }}</p>
                 <p>
                     <strong>Saved to database:</strong>
                     {{ result.save_summary.saved_count }} saved,
                     {{ result.save_summary.skipped_count }} skipped
                 </p>
+                <p>
+                    <strong>Instructions:</strong>
+                    {{ result.save_summary.instructions_saved }} saved,
+                    {{ result.save_summary.instructions_skipped }} skipped
+                </p>
             </div>
+
+            {% if result.parsed_data.instructions %}
+                <details>
+                    <summary>Detected instructions</summary>
+                    <ul class="instruction-list">
+                        {% for instruction in result.parsed_data.instructions %}
+                            <li>{{ instruction }}</li>
+                        {% endfor %}
+                    </ul>
+                </details>
+            {% endif %}
 
             {% if result.parsed_data.warnings %}
                 <ul class="warning-list">
@@ -50,10 +67,19 @@
                 </ul>
             {% endif %}
 
-            <details>
-                <summary>Extracted text preview</summary>
-                <pre>{{ result.extracted_text[:3000] }}</pre>
-            </details>
+            {% if result.extracted_text %}
+                <details>
+                    <summary>Extracted text preview</summary>
+                    <pre>{{ result.extracted_text[:3000] }}</pre>
+                </details>
+            {% endif %}
+
+            {% if result.parsed_data.records %}
+                <details>
+                    <summary>Parsed record preview</summary>
+                    <pre>{{ result.parsed_data.records[:5] }}</pre>
+                </details>
+            {% endif %}
         </div>
     {% endif %}
 
@@ -75,6 +101,10 @@
         .warning-list {
             color: #92400e;
             margin: 14px 0 0 18px;
+        }
+
+        .instruction-list {
+            margin: 10px 0 0 18px;
         }
 
         details {

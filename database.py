@@ -74,6 +74,7 @@ def create_tables(verbose=True):
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS exam_schedule (
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   subject_code TEXT,
                    branch TEXT NOT NULL,
                    semester TEXT NOT NULL,
                    exam_type TEXT NOT NULL,
@@ -82,6 +83,7 @@ def create_tables(verbose=True):
                    exam_time TEXT NOT NULL
                    )
     ''')
+    _add_column_if_missing(cursor, "exam_schedule", "subject_code", "TEXT")
 
 # Syllabus Table
     cursor.execute('''
@@ -105,6 +107,49 @@ def create_tables(verbose=True):
     parsed_records INTEGER DEFAULT 0
     )
     ''')
+
+# Exam Instructions Table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS exam_instructions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    instruction_text TEXT NOT NULL,
+    source_pdf TEXT,
+    created_at TEXT NOT NULL
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_schedule_unique
+    ON exam_schedule (
+        COALESCE(subject_code, ''),
+        branch,
+        semester,
+        exam_type,
+        subject,
+        exam_date,
+        exam_time
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_notices_unique
+    ON notices (title, link, date)
+    ''')
+
+    cursor.execute('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_syllabus_unique
+    ON syllabus (semester, subject, pdf_link)
+    ''')
+
+    cursor.execute('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_uploaded_pdfs_unique
+    ON uploaded_pdfs (file_path)
+    ''')
+
+    cursor.execute('''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_instructions_unique
+    ON exam_instructions (instruction_text, source_pdf)
+    ''')
     
     connection.commit()
     connection.close()
@@ -113,6 +158,19 @@ def create_tables(verbose=True):
         print("Database tables created successfully.")
 
     return True
+
+
+def _add_column_if_missing(cursor, table_name, column_name, column_type):
+    """Add a simple SQLite column when an existing database is missing it."""
+    columns = [
+        row["name"]
+        for row in cursor.execute(f"PRAGMA table_info({table_name})").fetchall()
+    ]
+
+    if column_name not in columns:
+        cursor.execute(
+            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+        )
 
 
 def _fetch_all(query, params=()):
@@ -171,6 +229,7 @@ def count_records(table_name):
         "notices",
         "faculty",
         "exam_schedule",
+        "exam_instructions",
         "uploaded_pdfs",
     }
 
@@ -179,6 +238,39 @@ def count_records(table_name):
 
     row = _fetch_one(f"SELECT COUNT(*) AS total FROM {table_name}")
     return row["total"] if row else 0
+
+
+def insert_faculty_if_new(name, branch, semester, subject, phone="", email=""):
+    """Insert a faculty row only when the same record is not already present."""
+    return _execute_write(
+        """
+        INSERT INTO faculty (name, branch, semester, subject, phone, email)
+        SELECT ?, ?, ?, ?, ?, ?
+        WHERE NOT EXISTS (
+            SELECT 1 FROM faculty
+            WHERE name = ?
+            AND branch = ?
+            AND semester = ?
+            AND subject = ?
+            AND COALESCE(phone, '') = ?
+            AND COALESCE(email, '') = ?
+        )
+        """,
+        (
+            name,
+            branch,
+            semester,
+            subject,
+            phone,
+            email,
+            name,
+            branch,
+            semester,
+            subject,
+            phone,
+            email,
+        ),
+    )
 
 
 def list_notices():
@@ -308,6 +400,14 @@ def get_uploaded_pdf(pdf_id):
 
 
 def create_uploaded_pdf(filename, file_path, pdf_link, pdf_type, uploaded_at, parsed_records):
+    existing = _fetch_one(
+        "SELECT id FROM uploaded_pdfs WHERE file_path = ?",
+        (file_path,),
+    )
+
+    if existing:
+        return existing["id"]
+
     return _execute_write(
         """
         INSERT INTO uploaded_pdfs

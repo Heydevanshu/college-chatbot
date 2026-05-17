@@ -34,16 +34,24 @@ from database import (
     update_notice,
     update_uploaded_pdf,
 )
-from pdf_processor import PDFProcessingError, process_uploaded_pdf
+from pdf_processor import PDFProcessingError, process_uploaded_file
 
 
 admin_bp = Blueprint("admin", __name__)
 
 
-BRANCH_OPTIONS = ["CSE", "ECE", "MECH", "CIVIL", "EE"]
-SEMESTER_OPTIONS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"]
-EXAM_TYPE_OPTIONS = ["Mid Sem 1", "Mid Sem 2", "Final"]
-PDF_TYPE_OPTIONS = ["unknown", "timetable", "notice", "syllabus"]
+PDF_TYPE_OPTIONS = [
+    "unknown",
+    "timetable",
+    "notice",
+    "syllabus",
+    "excel_faculty",
+    "excel_exam_schedule",
+    "excel_notice",
+    "csv_faculty",
+    "csv_exam_schedule",
+    "csv_notice",
+]
 
 
 def admin_required(view_func):
@@ -278,8 +286,6 @@ def faculty_add():
                     ("subject", "Subject"),
                 ],
             ),
-            _require_choice(data, "branch", "Branch", BRANCH_OPTIONS),
-            _require_choice(data, "semester", "Semester", SEMESTER_OPTIONS),
         )
 
         if error:
@@ -329,8 +335,6 @@ def faculty_edit(item_id):
                     ("subject", "Subject"),
                 ],
             ),
-            _require_choice(data, "branch", "Branch", BRANCH_OPTIONS),
-            _require_choice(data, "semester", "Semester", SEMESTER_OPTIONS),
         )
 
         if error:
@@ -397,9 +401,6 @@ def exam_add():
                     ("exam_time", "Time"),
                 ],
             ),
-            _require_choice(data, "branch", "Branch", BRANCH_OPTIONS),
-            _require_choice(data, "semester", "Semester", SEMESTER_OPTIONS),
-            _require_choice(data, "exam_type", "Exam Type", EXAM_TYPE_OPTIONS),
         )
 
         if error:
@@ -451,9 +452,6 @@ def exam_edit(item_id):
                     ("exam_time", "Time"),
                 ],
             ),
-            _require_choice(data, "branch", "Branch", BRANCH_OPTIONS),
-            _require_choice(data, "semester", "Semester", SEMESTER_OPTIONS),
-            _require_choice(data, "exam_type", "Exam Type", EXAM_TYPE_OPTIONS),
         )
 
         if error:
@@ -482,9 +480,9 @@ def exam_delete(item_id):
 def uploaded_pdfs():
     return render_template(
         "admin_list.html",
-        title="Uploaded PDFs",
+        title="Uploaded Files",
         add_url=url_for("admin.upload_pdf"),
-        add_label="Upload PDF",
+        add_label="Upload File",
         items=list_uploaded_pdfs(),
         columns=[
             {"key": "filename", "label": "File"},
@@ -505,10 +503,10 @@ def pdf_view(item_id):
     item = get_uploaded_pdf(item_id)
 
     if not item:
-        flash("PDF record not found.", "error")
+        flash("File record not found.", "error")
         return redirect(url_for("admin.uploaded_pdfs"))
 
-    return render_template("admin_detail.html", title="PDF Details", item=item, fields=_pdf_fields())
+    return render_template("admin_detail.html", title="File Details", item=item, fields=_pdf_fields())
 
 
 @admin_bp.route("/admin/pdfs/<int:item_id>/edit", methods=["GET", "POST"])
@@ -517,7 +515,7 @@ def pdf_edit(item_id):
     item = get_uploaded_pdf(item_id)
 
     if not item:
-        flash("PDF record not found.", "error")
+        flash("File record not found.", "error")
         return redirect(url_for("admin.uploaded_pdfs"))
 
     fields = _pdf_edit_fields()
@@ -534,14 +532,14 @@ def pdf_edit(item_id):
 
         if error:
             flash(error, "error")
-            return render_template("admin_form.html", title="Edit PDF", fields=fields, item=data)
+            return render_template("admin_form.html", title="Edit File", fields=fields, item=data)
 
         update_uploaded_pdf(item_id, data["filename"], data["pdf_type"])
-        flash("PDF metadata updated successfully.", "success")
+        flash("File metadata updated successfully.", "success")
 
         return redirect(url_for("admin.uploaded_pdfs"))
 
-    return render_template("admin_form.html", title="Edit PDF", fields=fields, item=item)
+    return render_template("admin_form.html", title="Edit File", fields=fields, item=item)
 
 
 @admin_bp.route("/admin/pdfs/<int:item_id>/delete", methods=["POST"])
@@ -550,7 +548,7 @@ def pdf_delete(item_id):
     item = get_uploaded_pdf(item_id)
 
     if not item:
-        flash("PDF record not found.", "error")
+        flash("File record not found.", "error")
         return redirect(url_for("admin.uploaded_pdfs"))
 
     file_delete_failed = False
@@ -559,15 +557,15 @@ def pdf_delete(item_id):
         try:
             os.remove(item["file_path"])
         except OSError as exc:
-            current_app.logger.warning("Could not delete PDF file: %s", exc)
+            current_app.logger.warning("Could not delete uploaded file: %s", exc)
             file_delete_failed = True
 
     delete_uploaded_pdf(item_id)
 
     if file_delete_failed:
-        flash("PDF record deleted, but the file could not be removed.", "error")
+        flash("File record deleted, but the file could not be removed.", "error")
     else:
-        flash("PDF deleted successfully.", "success")
+        flash("File deleted successfully.", "success")
 
     return redirect(url_for("admin.uploaded_pdfs"))
 
@@ -575,12 +573,13 @@ def pdf_delete(item_id):
 @admin_bp.route("/admin/upload", methods=["GET", "POST"])
 @admin_required
 def upload_pdf():
-    """Handle PDF uploads and show processing results."""
+    """Handle PDF, Excel, and CSV uploads and show processing results."""
     if request.method == "POST":
         try:
-            result = process_uploaded_pdf(
+            result = process_uploaded_file(
                 request.files.get("pdf_file"),
-                current_app.config["PDF_UPLOAD_FOLDER"]
+                current_app.config["UPLOAD_FOLDER"],
+                pdf_upload_folder=current_app.config["PDF_UPLOAD_FOLDER"]
             )
         except PDFProcessingError as exc:
             current_app.logger.warning("PDF upload failed: %s", exc)
@@ -588,7 +587,7 @@ def upload_pdf():
 
             return render_template("upload_pdf.html")
 
-        flash("PDF uploaded and processed successfully.", "success")
+        flash("File uploaded and processed successfully.", "success")
 
         return render_template("upload_pdf.html", result=result)
 
@@ -606,8 +605,8 @@ def _notice_fields():
 def _faculty_fields():
     return [
         {"name": "name", "label": "Name", "type": "text"},
-        {"name": "branch", "label": "Branch", "type": "select", "options": BRANCH_OPTIONS},
-        {"name": "semester", "label": "Semester", "type": "select", "options": SEMESTER_OPTIONS},
+        {"name": "branch", "label": "Branch / Program", "type": "text"},
+        {"name": "semester", "label": "Semester", "type": "text"},
         {"name": "subject", "label": "Subject", "type": "text"},
         {"name": "phone", "label": "Phone", "type": "text"},
         {"name": "email", "label": "Email", "type": "email"},
@@ -616,9 +615,9 @@ def _faculty_fields():
 
 def _exam_fields():
     return [
-        {"name": "branch", "label": "Branch", "type": "select", "options": BRANCH_OPTIONS},
-        {"name": "semester", "label": "Semester", "type": "select", "options": SEMESTER_OPTIONS},
-        {"name": "exam_type", "label": "Exam Type", "type": "select", "options": EXAM_TYPE_OPTIONS},
+        {"name": "branch", "label": "Branch / Program", "type": "text"},
+        {"name": "semester", "label": "Semester", "type": "text"},
+        {"name": "exam_type", "label": "Exam Type", "type": "text"},
         {"name": "subject", "label": "Subject", "type": "text"},
         {"name": "exam_date", "label": "Date", "type": "date"},
         {"name": "exam_time", "label": "Time", "type": "text"},

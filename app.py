@@ -8,6 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 app.secret_key = "college_chatbot_secret"
+app.config["UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads", "files")
 app.config["PDF_UPLOAD_FOLDER"] = os.path.join(BASE_DIR, "uploads", "pdfs")
 
 # Ensure the SQLite schema exists before any route queries it.

@@ -7,8 +7,8 @@
 
     <div class="dashboard-grid">
         <div class="card">
-            <h3>Upload PDF</h3>
-            <p>Upload timetable, syllabus, or notice PDFs for automatic processing.</p>
+            <h3>Upload File</h3>
+            <p>Upload PDF, Excel, or CSV files for automatic processing.</p>
             <a class="btn btn-primary" href="{{ url_for('admin.upload_pdf') }}">Upload</a>
         </div>
 
@@ -31,8 +31,8 @@
         </div>
 
         <div class="card">
-            <h3>Uploaded PDFs</h3>
-            <p>{{ stats.pdfs }} uploaded PDF records saved in the system.</p>
+            <h3>Uploaded Files</h3>
+            <p>{{ stats.pdfs }} uploaded file records saved in the system.</p>
             <a class="btn btn-primary" href="{{ url_for('admin.uploaded_pdfs') }}">View</a>
         </div>
     </div>
