@@ -1,0 +1,49 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+    <div class="page-header">
+        <h2>{{ title }}</h2>
+        <a class="btn btn-secondary" href="{{ request.referrer or url_for('admin.admin_dashboard') }}">
+            Back
+        </a>
+    </div>
+
+    <form class="panel" method="POST">
+        <div class="form-grid">
+            {% for field in fields %}
+                <div class="field">
+                    <label for="{{ field.name }}">{{ field.label }}</label>
+
+                    {% if field.type == "select" %}
+                        <select id="{{ field.name }}" name="{{ field.name }}">
+                            <option value="">Select {{ field.label }}</option>
+
+                            {% for option in field.options %}
+                                <option
+                                    value="{{ option }}"
+                                    {% if item.get(field.name, "") == option %}selected{% endif %}
+                                >
+                                    {{ option }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <input
+                            id="{{ field.name }}"
+                            name="{{ field.name }}"
+                            type="{{ field.type or 'text' }}"
+                            value="{{ item.get(field.name, '') }}"
+                        >
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a class="btn btn-secondary" href="{{ request.referrer or url_for('admin.admin_dashboard') }}">
+                Cancel
+            </a>
+        </div>
+    </form>
+{% endblock %}

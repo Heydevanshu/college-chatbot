@@ -1,0 +1,21 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+    <div class="page-header">
+        <h2>{{ title }}</h2>
+        <a class="btn btn-secondary" href="{{ request.referrer or url_for('admin.admin_dashboard') }}">
+            Back
+        </a>
+    </div>
+
+    <div class="panel">
+        <div class="detail-list">
+            {% for field in fields %}
+                <div class="detail-row">
+                    <strong>{{ field.label }}</strong>
+                    <span>{{ item.get(field.name, "") }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,119 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "admin_base.html" %}
 
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Upload PDF</title>
-
-    <style>
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f4f7fb;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .upload-container {
-            width: 420px;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #1e40af;
-        }
-
-        .success-message {
-            color: green;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        input[type="file"] {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .upload-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            background-color: #2563eb;
-            color: white;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .upload-btn:hover {
-            background-color: #1d4ed8;
-        }
-
-    </style>
-
-</head>
-
-<body>
-
-    <div class="upload-container">
-
-        <h1>Upload PDF</h1>
-
-        {% if success %}
-
-            <div class="success-message">
-
-                {{ success }}
-
-            </div>
-
-        {% endif %}
-
-        <form
-            method="POST"
-            enctype="multipart/form-data"
-        >
-
-            <input
-                type="file"
-                name="pdf_file"
-                accept=".pdf"
-                required
-            >
-
-            <button
-                type="submit"
-                class="upload-btn"
-            >
-
-                Upload PDF
-
-            </button>
-
-        </form>
-
+{% block content %}
+    <div class="page-header">
+        <h2>Upload PDF</h2>
+        <a class="btn btn-secondary" href="{{ url_for('admin.uploaded_pdfs') }}">
+            Uploaded PDFs
+        </a>
     </div>
 
-</body>
+    <form class="panel" method="POST" enctype="multipart/form-data">
+        <div class="field">
+            <label for="pdf_file">PDF File</label>
+            <input id="pdf_file" type="file" name="pdf_file" accept=".pdf" required>
+        </div>
 
-</html>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Upload PDF</button>
+        </div>
+    </form>
+
+    {% if result %}
+        <div class="panel result-panel">
+            <h3>Processing Result</h3>
+
+            <div class="result-grid">
+                <p><strong>File:</strong> {{ result.filename }}</p>
+                <p><strong>Detected type:</strong> {{ result.pdf_type | title }}</p>
+                <p><strong>Parsed records:</strong> {{ result.parsed_data.records | length }}</p>
+                <p>
+                    <strong>Saved to database:</strong>
+                    {{ result.save_summary.saved_count }} saved,
+                    {{ result.save_summary.skipped_count }} skipped
+                </p>
+            </div>
+
+            {% if result.parsed_data.warnings %}
+                <ul class="warning-list">
+                    {% for warning in result.parsed_data.warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if result.save_summary.errors %}
+                <ul class="warning-list">
+                    {% for error in result.save_summary.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <details>
+                <summary>Extracted text preview</summary>
+                <pre>{{ result.extracted_text[:3000] }}</pre>
+            </details>
+        </div>
+    {% endif %}
+
+    <style>
+        .result-panel {
+            margin-top: 18px;
+        }
+
+        .result-panel h3 {
+            margin-bottom: 12px;
+        }
+
+        .result-grid {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .warning-list {
+            color: #92400e;
+            margin: 14px 0 0 18px;
+        }
+
+        details {
+            margin-top: 14px;
+        }
+
+        summary {
+            color: #1e40af;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        pre {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 10px;
+            max-height: 260px;
+            overflow: auto;
+            padding: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+{% endblock %}

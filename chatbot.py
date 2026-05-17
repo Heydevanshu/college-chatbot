@@ -4,11 +4,18 @@ from database import (
     get_faculty,
     get_syllabus
 )
+from html import escape
+from sqlite3 import Error
+
+
+def _safe_text(value):
+    """Escape database values before rendering them through safe HTML."""
+    return escape(str(value or ""))
 
 
 def get_latest_notices():
 
-    """Fetch latest notice from database."""
+    """Fetch latest notices from database."""
 
     connection = create_connection()
 
@@ -17,19 +24,58 @@ def get_latest_notices():
 
     cursor = connection.cursor()
 
-    cursor.execute("""
-        SELECT title, link, date
-        FROM notices
-        ORDER BY date DESC
-        LIMIT 5
-    """)
+    try:
+        cursor.execute("""
+            SELECT title, link, date
+            FROM notices
+            ORDER BY date DESC
+            LIMIT 5
+        """)
 
-    notice = cursor.fetchone()
+        notices = cursor.fetchall()
+    except Error as e:
+        print(f"Error fetching notices: {e}")
+        notices = []
 
     connection.close()
 
-    if notice:
-        return f"Latest Notice: {notice[0]} ({notice[1]})"
+    if notices:
+        response = """
+        <h3>Latest Notices</h3>
+
+        <table
+            border='1'
+            cellpadding='8'
+            cellspacing='0'
+            style='border-collapse: collapse; width: 100%;'
+        >
+
+            <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Link</th>
+            </tr>
+        """
+
+        for title, link, date in notices:
+            safe_link = _safe_text(link)
+            link_cell = (
+                f"<a href='{safe_link}' target='_blank' rel='noopener'>Open</a>"
+                if safe_link
+                else "N/A"
+            )
+
+            response += f"""
+            <tr>
+                <td>{_safe_text(title)}</td>
+                <td>{_safe_text(date)}</td>
+                <td>{link_cell}</td>
+            </tr>
+            """
+
+        response += "</table>"
+
+        return response
 
     return "No notices available."
 
@@ -38,7 +84,10 @@ def get_chatbot_response(user_message):
 
     """Generate chatbot response."""
 
-    user_message = user_message.lower()
+    if not user_message or not user_message.strip():
+        return "Please enter a message."
+
+    user_message = user_message.strip().lower()
 
     # Normalize user input
     user_message = user_message.replace("-", " ")
@@ -52,9 +101,20 @@ def get_chatbot_response(user_message):
     user_message = user_message.replace("first", "1st")
 
     # Greeting
-    if "hello" in user_message or "hi" in user_message:
+    words = set(user_message.split())
+
+    if {"hello", "hi", "hey"} & words:
 
         return "Hello! How can I assist you today?"
+
+    # Notices
+    elif (
+        "notice" in user_message or
+        "notices" in user_message or
+        "circular" in user_message
+    ):
+
+        return get_latest_notices()
 
     # Exam Information
     elif "exam" in user_message:
@@ -206,9 +266,9 @@ def get_chatbot_response(user_message):
 
                 response += f"""
                 <tr>
-                    <td>{exam[0]}</td>
-                    <td>{exam[1]}</td>
-                    <td>{exam[2]}</td>
+                    <td>{_safe_text(exam[0])}</td>
+                    <td>{_safe_text(exam[1])}</td>
+                    <td>{_safe_text(exam[2])}</td>
                 </tr>
                 """
 
@@ -290,9 +350,9 @@ def get_chatbot_response(user_message):
 
                 response += f"""
                 <tr>
-                    <td>{teacher[0]}</td>
-                    <td>{teacher[1]}</td>
-                    <td>{teacher[2]}</td>
+                    <td>{_safe_text(teacher[0])}</td>
+                    <td>{_safe_text(teacher[1])}</td>
+                    <td>{_safe_text(teacher[2])}</td>
                 </tr>
                 """
 
@@ -322,15 +382,23 @@ def get_chatbot_response(user_message):
                 <tr>
                     <th>Semester</th>
                     <th>Subject</th>
+                    <th>PDF</th>
                 </tr>
             """
 
             for item in syllabus:
+                safe_link = _safe_text(item[2])
+                link_cell = (
+                    f"<a href='{safe_link}' target='_blank' rel='noopener'>Open</a>"
+                    if safe_link
+                    else "N/A"
+                )
 
                 response += f"""
                 <tr>
-                    <td>{item[0]}</td>
-                    <td>{item[1]}</td>
+                    <td>{_safe_text(item[0])}</td>
+                    <td>{_safe_text(item[1])}</td>
+                    <td>{link_cell}</td>
                 </tr>
                 """
 
