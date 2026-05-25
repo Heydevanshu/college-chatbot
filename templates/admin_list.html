@@ -1,33 +1,134 @@
 {% extends "admin_base.html" %}
 
 {% block content %}
+
     <div class="page-header">
+
         <h2>{{ title }}</h2>
-        <a class="btn btn-primary" href="{{ add_url }}">{{ add_label }}</a>
+
+        <div class="actions">
+
+            {% if upload_url %}
+                <a
+                    class="btn btn-secondary"
+                    href="#section-upload"
+                >
+                    Upload
+                </a>
+            {% endif %}
+
+            <a
+                class="btn btn-primary"
+                href="{{ add_url }}"
+            >
+                {{ add_label }}
+            </a>
+
+        </div>
+
     </div>
 
+    {% if upload_url %}
+
+        <form
+            id="section-upload"
+            class="panel upload-panel"
+            method="POST"
+            action="{{ upload_url }}"
+            enctype="multipart/form-data"
+        >
+
+            <div class="field">
+
+                <label for="upload_file">
+
+                    {{ upload_label }}
+
+                </label>
+
+                <input
+                    id="upload_file"
+                    name="upload_file"
+                    type="file"
+                    accept="{{ upload_accept }}"
+                    required
+                >
+
+                {% if upload_help %}
+
+                    <p class="muted upload-help">
+
+                        {{ upload_help }}
+
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+            <div class="form-actions">
+
+                <button
+                    class="btn btn-primary"
+                    type="submit"
+                >
+                    Upload
+                </button>
+
+            </div>
+
+        </form>
+
+    {% endif %}
+
     <div class="panel">
+
         {% if items %}
+
             <div class="table-wrap">
+
                 <table>
+
                     <thead>
+
                         <tr>
+
                             {% for column in columns %}
-                                <th>{{ column.label }}</th>
+
+                                <th>
+
+                                    {{ column.label }}
+
+                                </th>
+
                             {% endfor %}
+
                             <th>Actions</th>
+
                         </tr>
+
                     </thead>
 
                     <tbody>
+
                         {% for item in items %}
+
                             <tr>
+
                                 {% for column in columns %}
-                                    <td>{{ item[column.key] }}</td>
+
+                                    <td>
+
+                                        {{ item[column.key] }}
+
+                                    </td>
+
                                 {% endfor %}
 
                                 <td>
+
                                     <div class="actions">
+
                                         <a
                                             class="btn btn-secondary"
                                             href="{{ url_for(view_endpoint, item_id=item.id) }}"
@@ -47,19 +148,57 @@
                                             action="{{ url_for(delete_endpoint, item_id=item.id) }}"
                                             onsubmit="return confirm('Delete this record?');"
                                         >
-                                            <button class="btn btn-danger" type="submit">
+
+                                            <button
+                                                class="btn btn-danger"
+                                                type="submit"
+                                            >
                                                 Delete
                                             </button>
+
                                         </form>
+
                                     </div>
+
                                 </td>
+
                             </tr>
+
                         {% endfor %}
+
                     </tbody>
+
                 </table>
+
             </div>
+
         {% else %}
-            <p class="muted">{{ empty_message }}</p>
+
+            <p class="muted">
+
+                {{ empty_message }}
+
+            </p>
+
         {% endif %}
+
     </div>
+
+    <style>
+
+        .upload-panel {
+            border-left: 4px solid #2563eb;
+            margin-bottom: 18px;
+        }
+
+        .upload-help {
+            margin-top: 8px;
+        }
+
+        .upload-panel .form-actions {
+            margin-top: 12px;
+        }
+
+    </style>
+
 {% endblock %}

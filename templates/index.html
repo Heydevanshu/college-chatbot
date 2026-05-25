@@ -21,46 +21,72 @@
             font-family: Arial, sans-serif;
         }
 
+        html {
+            min-height: 100%;
+            overflow-x: hidden;
+        }
+
         body {
-            background-color: #f4f7fb;
-            height: 100vh;
+            background: #eef3f8;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 16px;
+            overflow-x: hidden;
         }
 
         .chat-container {
             width: 100%;
-            max-width: 500px;
+            max-width: 860px;
+            height: min(760px, calc(100vh - 32px));
             background: white;
-            border-radius: 14px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .chat-header {
-            background-color: #1e40af;
+            background: #1f3f82;
             color: white;
-            padding: 18px;
+            padding: 18px 20px;
             text-align: center;
         }
 
         .chat-header h1 {
             font-size: 24px;
+            line-height: 1.2;
         }
 
         .chat-body {
-            padding: 20px;
-            min-height: 350px;
+            flex: 1;
+            min-height: 0;
+            padding: 18px;
             background-color: #f9fafb;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            width: fit-content;
+            max-width: min(78%, 680px);
+            padding: 12px 14px;
+            border-radius: 12px;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .user-message {
-            background-color: #dbeafe;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            background: #dbeafe;
+            color: #172554;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
         }
 
         .user-message p {
@@ -68,10 +94,12 @@
         }
 
         .bot-message {
-            background-color: #e5e7eb;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            background: #ffffff;
+            color: #111827;
+            align-self: flex-start;
+            max-width: min(92%, 760px);
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 4px;
         }
 
         .bot-message strong {
@@ -80,14 +108,22 @@
         }
 
         .response-table {
-            overflow-x: auto;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .response-table p {
+            margin-bottom: 10px;
         }
 
         .response-table table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
-            margin-top: 5px;
+            margin-top: 8px;
             background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .response-table th,
@@ -96,6 +132,8 @@
             padding: 10px;
             text-align: left;
             font-size: 14px;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .response-table th {
@@ -107,8 +145,76 @@
             background-color: #f3f4f6;
         }
 
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-reply-form {
+            display: inline-flex;
+            max-width: 100%;
+        }
+
+        .quick-reply-form button {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1.2;
+            padding: 8px 11px;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+
+        .quick-reply-form button:hover {
+            background: #dbeafe;
+        }
+
+        .clear-chat-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .clear-chat-action-form {
+            display: inline-flex;
+            max-width: 100%;
+        }
+
+        .clear-chat-action-form button {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #1f2937;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1.2;
+            padding: 8px 11px;
+            max-width: 100%;
+        }
+
+        .clear-chat-action-form button:hover {
+            background: #eef2f7;
+        }
+
+        .clear-chat-action-form button.danger {
+            border-color: #fecaca;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .clear-chat-action-form button.danger:hover {
+            background: #fee2e2;
+        }
+
         .chat-form {
             display: flex;
+            gap: 10px;
             padding: 15px;
             border-top: 1px solid #ddd;
             background-color: white;
@@ -116,6 +222,7 @@
 
         .chat-form input {
             flex: 1;
+            min-width: 0;
             padding: 12px;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -123,8 +230,13 @@
             font-size: 15px;
         }
 
+        .chat-form input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+        }
+
         .chat-form button {
-            margin-left: 10px;
+            flex: 0 0 auto;
             padding: 12px 18px;
             border: none;
             background-color: #2563eb;
@@ -136,6 +248,39 @@
 
         .chat-form button:hover {
             background-color: #1d4ed8;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0;
+                align-items: stretch;
+            }
+
+            .chat-container {
+                height: 100vh;
+                max-width: none;
+                border-radius: 0;
+            }
+
+            .chat-header {
+                padding: 15px;
+            }
+
+            .chat-header h1 {
+                font-size: 20px;
+            }
+
+            .chat-body {
+                padding: 12px;
+            }
+
+            .message {
+                max-width: 100%;
+            }
+
+            .chat-form {
+                padding: 10px;
+            }
         }
 
     </style>
@@ -154,34 +299,35 @@
 
         <div class="chat-body">
 
-            {% if user_message %}
+            {% for item in conversation %}
 
-                <div class="user-message">
+                {% if item.role == "user" %}
 
-                    <strong>You:</strong>
+                    <div class="message user-message">
 
-                    <p>{{ user_message }}</p>
+                        <strong>You:</strong>
 
-                </div>
-
-            {% endif %}
-
-
-            {% if response %}
-
-                <div class="bot-message">
-
-                    <strong>Bot:</strong>
-
-                    <div class="response-table">
-
-                        {{ response | safe }}
+                        <p>{{ item.message }}</p>
 
                     </div>
 
-                </div>
+                {% else %}
 
-            {% endif %}
+                    <div class="message bot-message">
+
+                        <strong>Bot:</strong>
+
+                        <div class="response-table">
+
+                            {{ item.message | safe }}
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
 
         </div>
 
@@ -208,6 +354,87 @@
         </form>
 
     </div>
+
+    <script>
+        const chatBody = document.querySelector(".chat-body");
+        const chatForm = document.querySelector(".chat-form");
+
+        function scrollChatToBottom() {
+            if (chatBody) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement("div");
+            div.textContent = value || "";
+            return div.innerHTML;
+        }
+
+        function renderConversation(conversation) {
+            if (!chatBody) {
+                return;
+            }
+
+            chatBody.innerHTML = conversation.map((item) => {
+                if (item.role === "user") {
+                    return `
+                        <div class="message user-message">
+                            <strong>You:</strong>
+                            <p>${escapeHtml(item.message)}</p>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="message bot-message">
+                        <strong>Bot:</strong>
+                        <div class="response-table">${item.message || ""}</div>
+                    </div>
+                `;
+            }).join("");
+
+            scrollChatToBottom();
+        }
+
+        async function submitChatForm(form) {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                form.submit();
+                return;
+            }
+
+            const data = await response.json();
+            renderConversation(data.conversation || []);
+        }
+
+        if (chatForm) {
+            chatForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                await submitChatForm(chatForm);
+                chatForm.reset();
+            });
+        }
+
+        document.addEventListener("submit", async (event) => {
+            const form = event.target;
+            if (!form.classList.contains("clear-chat-action-form")) {
+                return;
+            }
+
+            event.preventDefault();
+            await submitChatForm(form);
+        });
+
+        scrollChatToBottom();
+    </script>
 
 </body>
 

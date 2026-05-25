@@ -34,7 +34,7 @@ from database import (
     update_notice,
     update_uploaded_pdf,
 )
-from pdf_processor import PDFProcessingError, process_uploaded_file
+from pdf_processor import PDFProcessingError, process_management_upload, process_uploaded_file
 
 
 admin_bp = Blueprint("admin", __name__)
@@ -97,6 +97,37 @@ def _first_error(*errors):
     return next((error for error in errors if error), "")
 
 
+def _handle_section_upload(target, redirect_endpoint, success_label):
+    """Process a management-section upload and redirect back to the section."""
+    try:
+        result = process_management_upload(
+            request.files.get("upload_file"),
+            current_app.config["UPLOAD_FOLDER"],
+            target=target,
+            pdf_upload_folder=current_app.config["PDF_UPLOAD_FOLDER"],
+        )
+    except PDFProcessingError as exc:
+        current_app.logger.warning("Section upload failed: %s", exc)
+        flash(str(exc), "error")
+
+        return redirect(url_for(redirect_endpoint))
+
+    summary = result["save_summary"]
+    flash(
+        (
+            f"{success_label} processed. "
+            f"{summary['saved_count']} saved, "
+            f"{summary['skipped_count']} duplicate/skipped."
+        ),
+        "success",
+    )
+
+    for warning in result["parsed_data"].get("warnings", [])[:3]:
+        flash(warning, "error")
+
+    return redirect(url_for(redirect_endpoint))
+
+
 @admin_bp.route("/admin", methods=["GET", "POST"])
 def admin_login():
     """Handle admin login."""
@@ -150,6 +181,10 @@ def manage_notices():
         title="Manage Notices",
         add_url=url_for("admin.notice_add"),
         add_label="Add Notice",
+        upload_url=url_for("admin.notice_upload"),
+        upload_label="Upload Notice PDF",
+        upload_accept=".pdf",
+        upload_help="Upload a notice PDF. The system extracts the title/date and saves it to notices.",
         items=list_notices(),
         columns=[
             {"key": "title", "label": "Title"},
@@ -160,6 +195,16 @@ def manage_notices():
         edit_endpoint="admin.notice_edit",
         delete_endpoint="admin.notice_delete",
         empty_message="No notices have been added yet.",
+    )
+
+
+@admin_bp.route("/admin/notices/upload", methods=["POST"])
+@admin_required
+def notice_upload():
+    return _handle_section_upload(
+        target="notice",
+        redirect_endpoint="admin.manage_notices",
+        success_label="Notice PDF"
     )
 
 
@@ -254,6 +299,10 @@ def manage_faculty():
         title="Faculty Management",
         add_url=url_for("admin.faculty_add"),
         add_label="Add Faculty",
+        upload_url=url_for("admin.faculty_upload"),
+        upload_label="Upload Faculty Excel/CSV",
+        upload_accept=".xlsx,.csv",
+        upload_help="Headers can include name, branch, semester, subject, phone, and email.",
         items=list_faculty_members(),
         columns=[
             {"key": "name", "label": "Name"},
@@ -266,6 +315,16 @@ def manage_faculty():
         edit_endpoint="admin.faculty_edit",
         delete_endpoint="admin.faculty_delete",
         empty_message="No faculty records have been added yet.",
+    )
+
+
+@admin_bp.route("/admin/faculty/upload", methods=["POST"])
+@admin_required
+def faculty_upload():
+    return _handle_section_upload(
+        target="faculty",
+        redirect_endpoint="admin.manage_faculty",
+        success_label="Faculty file"
     )
 
 
@@ -366,6 +425,10 @@ def manage_exams():
         title="Exam Schedule Management",
         add_url=url_for("admin.exam_add"),
         add_label="Add Exam",
+        upload_url=url_for("admin.exam_upload"),
+        upload_label="Upload Exam PDF/Excel",
+        upload_accept=".pdf,.xlsx",
+        upload_help="Upload timetable PDFs or Excel files with subject, exam_date, and exam_time columns.",
         items=list_exam_schedules(),
         columns=[
             {"key": "branch", "label": "Branch"},
@@ -379,6 +442,16 @@ def manage_exams():
         edit_endpoint="admin.exam_edit",
         delete_endpoint="admin.exam_delete",
         empty_message="No exam schedules have been added yet.",
+    )
+
+
+@admin_bp.route("/admin/exams/upload", methods=["POST"])
+@admin_required
+def exam_upload():
+    return _handle_section_upload(
+        target="exam_schedule",
+        redirect_endpoint="admin.manage_exams",
+        success_label="Exam schedule file"
     )
 
 
@@ -493,7 +566,7 @@ def uploaded_pdfs():
         view_endpoint="admin.pdf_view",
         edit_endpoint="admin.pdf_edit",
         delete_endpoint="admin.pdf_delete",
-        empty_message="No PDFs have been uploaded yet.",
+        empty_message="No files have been uploaded yet.",
     )
 
 

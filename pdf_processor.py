@@ -312,6 +312,79 @@ def process_uploaded_file(file_storage, upload_folder, save_to_database=True, pd
     return result
 
 
+def process_management_upload(file_storage, upload_folder, target, save_to_database=True, pdf_upload_folder=None):
+    """Process uploads from a specific admin management section."""
+    allowed_targets = {"faculty", "exam_schedule", "notice"}
+
+    if target not in allowed_targets:
+        raise PDFProcessingError("Unsupported management upload target.")
+
+    file_type = detect_uploaded_file_type(file_storage.filename if file_storage else "")
+    _validate_management_file_type(target, file_type)
+
+    target_folder = pdf_upload_folder if file_type == "pdf" and pdf_upload_folder else upload_folder
+    saved_path, filename = _save_file_upload(file_storage, target_folder)
+    file_link = _relative_pdf_link(filename) if file_type == "pdf" else _relative_upload_link(filename)
+    upload_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    extracted_text = ""
+
+    if target == "faculty":
+        parsed_data = (
+            parse_excel_faculty(saved_path)
+            if file_type == "excel"
+            else parse_csv_data(saved_path, expected_data_type="faculty")
+        )
+        data_type = "faculty"
+        save_summary = save_tabular_data(data_type, parsed_data) if save_to_database else _empty_save_summary()
+
+    elif target == "exam_schedule":
+        if file_type == "pdf":
+            extracted_text = extract_pdf_text(saved_path)
+            parsed_data = parse_timetable(extracted_text)
+            data_type = "timetable"
+            save_summary = save_parsed_data("timetable", parsed_data, file_link) if save_to_database else _empty_save_summary()
+        else:
+            parsed_data = parse_excel_exam_schedule(saved_path)
+            data_type = "exam_schedule"
+            save_summary = save_tabular_data(data_type, parsed_data) if save_to_database else _empty_save_summary()
+
+    else:
+        extracted_text = extract_pdf_text(saved_path)
+        parsed_data = parse_notice(extracted_text, file_link)
+        data_type = "notice"
+        save_summary = save_parsed_data("notice", parsed_data, file_link) if save_to_database else _empty_save_summary()
+
+    detected_type = f"{file_type}_{data_type}" if file_type != "pdf" else data_type
+    upload_id = None
+
+    if save_to_database:
+        upload_id = create_uploaded_pdf(
+            filename,
+            saved_path,
+            file_link,
+            detected_type,
+            upload_time,
+            len(parsed_data.get("records", [])),
+        )
+
+    result = _upload_result(
+        upload_id,
+        filename,
+        saved_path,
+        file_link,
+        detected_type,
+        data_type,
+        upload_time,
+        extracted_text,
+        parsed_data,
+        save_summary,
+    )
+    result["file_type"] = file_type
+    result["detected_type"] = data_type
+
+    return result
+
+
 def detect_uploaded_file_type(filename):
     """Detect upload type from extension without reading the whole file."""
     extension = os.path.splitext(filename or "")[1].lower()
@@ -326,6 +399,22 @@ def detect_uploaded_file_type(filename):
         return "csv"
 
     return "unknown"
+
+
+def _validate_management_file_type(target, file_type):
+    allowed = {
+        "faculty": {"excel", "csv"},
+        "exam_schedule": {"pdf", "excel"},
+        "notice": {"pdf"},
+    }
+
+    if file_type not in allowed[target]:
+        messages = {
+            "faculty": "Faculty uploads support Excel (.xlsx) and CSV files.",
+            "exam_schedule": "Exam uploads support PDF and Excel (.xlsx) files.",
+            "notice": "Notice uploads support PDF files.",
+        }
+        raise PDFProcessingError(messages[target])
 
 
 def parse_excel_faculty(file_path):
@@ -344,10 +433,10 @@ def parse_excel_exam_schedule(file_path):
     return _tabular_result("exam_schedule", records, warnings)
 
 
-def parse_csv_data(file_path, source_link=""):
+def parse_csv_data(file_path, source_link="", expected_data_type=None):
     """Parse CSV data and infer whether it contains faculty, exams, or notices."""
     rows = _read_csv_rows(file_path)
-    data_type = _detect_tabular_data_type(rows)
+    data_type = expected_data_type or _detect_tabular_data_type(rows)
 
     return _parse_tabular_rows(rows, data_type, source_link)
 
